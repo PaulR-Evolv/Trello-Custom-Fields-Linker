@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+</head>
+<body>
+  <script>
+    window.TrelloPowerUp.initialize({
+      // 1. Adds a button to the top of your Trello Board
+      'board-buttons': function(t, options) {
+        return [{
+          icon: 'https://cdn-icons-png.flaticon.com/512/2040/2040504.png',
+          text: 'Field Linker Setup',
+          callback: function(t) {
+            return t.modal({ url: './dashboard.html', height: 400, title: 'Manage Linking Rules' });
+          }
+        }];
+      },
+      // 2. Adds the dynamic fields to the back of your cards
+      'card-back-section': function(t, options) {
+        return {
+          title: 'Smart Linked Fields',
+          icon: 'https://cdn-icons-png.flaticon.com/512/2040/2040504.png',
+          content: { type: 'iframe', url: t.signUrl('./section.html'), height: 250 }
+        };
+      }
+    });
+  </script>
+</body>
+</html>
