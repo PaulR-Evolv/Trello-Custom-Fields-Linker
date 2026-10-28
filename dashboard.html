@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 15px; color: #172b4d; }
+    .rule-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; background: #f4f5f7; padding: 8px; border-radius: 4px; }
+    input { padding: 6px; border: 1px solid #dfe1e6; border-radius: 3px; font-size: 14px; width: 110px; }
+    button { padding: 6px 12px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
+    .btn-add { background: #091e420f; color: #172b4d; margin-bottom: 15px; }
+    .btn-save { background: #0052cc; color: white; width: 100%; padding: 10px; }
+    .btn-del { background: #ff5630; color: white; }
+  </style>
+</head>
+<body>
+  <p>Define your rules below. The Power-Up will automatically generate the required fields on your cards.</p>
+  <div id="rulesList"></div>
+  
+  <button class="btn-add" onclick="addRule()">+ Add New Rule</button>
+  <button class="btn-save" onclick="saveRules()">Save Rules</button>
+
+  <script>
+    const t = window.TrelloPowerUp.iframe();
+    let rules = [];
+
+    // Load existing rules from board memory
+    t.render(async () => {
+      rules = await t.get('board', 'shared', 'rules', []);
+      renderRules();
+    });
+
+    function renderRules() {
+      const list = document.getElementById('rulesList');
+      list.innerHTML = '';
+      rules.forEach((r, i) => {
+        list.innerHTML += `
+          <div class="rule-row">
+            If <input type="text" placeholder="Field A" value="${r.f1}" onchange="rules[${i}].f1=this.value">
+            is <input type="text" placeholder="Value (Red)" value="${r.v1}" onchange="rules[${i}].v1=this.value">
+            $\rightarrow$ Set <input type="text" placeholder="Field B" value="${r.f2}" onchange="rules[${i}].f2=this.value">
+            to <input type="text" placeholder="Value (Y)" value="${r.v2}" onchange="rules[${i}].v2=this.value">
+            <button class="btn-del" onclick="deleteRule(${i})">X</button>
+          </div>
+        `;
+      });
+      t.sizeTo('body');
+    }
+
+    function addRule() {
+      rules.push({ f1: '', v1: '', f2: '', v2: '' });
+      renderRules();
+    }
+
+    function deleteRule(i) {
+      rules.splice(i, 1);
+      renderRules();
+    }
+
+    // Save rules globally to the board and close the window
+    function saveRules() {
+      t.set('board', 'shared', 'rules', rules).then(() => t.closeModal());
+    }
+  </script>
+</body>
+</html>
