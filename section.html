@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 4px; margin: 0; }
+    .field-group { margin-bottom: 12px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: #5e6c84; text-transform: uppercase; margin-bottom: 4px; }
+    input { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #dfe1e6; border-radius: 3px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="fieldsContainer">Loading...</div>
+
+  <script>
+    const t = window.TrelloPowerUp.iframe();
+
+    t.render(async () => {
+      const rules = await t.get('board', 'shared', 'rules', []);
+      const cardData = await t.get('card', 'shared', 'data', {});
+      const container = document.getElementById('fieldsContainer');
+
+      // Find all unique fields mentioned in your rules
+      const uniqueFields = new Set();
+      rules.forEach(r => {
+         if(r.f1) uniqueFields.add(r.f1);
+         if(r.f2) uniqueFields.add(r.f2);
+      });
+
+      if(uniqueFields.size === 0) {
+         container.innerHTML = "<p style='color:#5e6c84;'>No fields yet. Click 'Field Linker Setup' at the top of your board to create rules.</p>";
+         return t.sizeTo('body');
+      }
+
+      // Generate the UI fields dynamically
+      container.innerHTML = '';
+      uniqueFields.forEach(f => {
+        // Create an autocomplete dropdown based on known rules
+        const options = rules.filter(r => r.f1 === f).map(r => r.v1);
+        const dataListHtml = `<datalist id="dl-${f}">${options.map(o => `<option value="${o}">`).join('')}</datalist>`;
+        
+        container.innerHTML += `
+          <div class="field-group">
+            <label>${f}</label>
+            <input type="text" id="input-${f}" list="dl-${f}" value="${cardData[f] || ''}" placeholder="Select or type...">
+            ${dataListHtml}
+          </div>
+        `;
+      });
+
+      // Listen for changes and apply your logic
+      uniqueFields.forEach(f => {
+        document.getElementById(`input-${f}`).addEventListener('change', async (e) => {
+          const val = e.target.value;
+          cardData[f] = val; // Save the changed field
+
+          // Check if this triggers any of your rules
+          rules.forEach(r => {
+            if (r.f1 === f && r.v1 === val) {
+              cardData[r.f2] = r.v2; // Update data in memory
+              const targetInput = document.getElementById(`input-${r.f2}`);
+              if (targetInput) targetInput.value = r.v2; // Update the visual UI instantly
+            }
+          });
+
+          // Save all updated data to the card
+          await t.set('card', 'shared', 'data', cardData);
+        });
+      });
+
+      t.sizeTo('body');
+    });
+  </script>
+</body>
+</html>
